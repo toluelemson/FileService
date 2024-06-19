@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: FileService
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/filedb
+      authentication-database: admin
+  servlet:
+    multipart:
+      max-file-size: 16MB
+      max-request-size: 16MB
