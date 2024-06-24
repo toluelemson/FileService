@@ -76,4 +76,17 @@ public class FileService {
         ));
     }
 
+    public void deleteFileByToken(UUID token) {
+        FileMetadata metadata = getMetadata(token);
+        if (metadata == null) {
+            throw new ResourceNotFoundException("File metadata not found");
+        }
+        fileMetadataRepository.deleteById(metadata.getToken());
+
+        try {
+            Files.deleteIfExists(Paths.get(metadata.getPath()));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete file", e);
+        }
+    }
 }

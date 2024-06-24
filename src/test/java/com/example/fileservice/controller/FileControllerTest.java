@@ -123,4 +123,11 @@ class FileControllerTest {
 
         Files.deleteIfExists(path);
     }
+
+    @Test
+    void testDeleteFile() throws Exception {
+        UUID token = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/file/" + token)).andExpect(status().isNoContent());
+    }
 }

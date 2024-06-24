@@ -112,4 +112,11 @@ public class FileController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }
+
+
+    @DeleteMapping("/{token}")
+    public ResponseEntity<Void> deleteFile(@PathVariable UUID token) {
+        fileService.deleteFileByToken(token);
+        return ResponseEntity.noContent().build();
+    }
 }
