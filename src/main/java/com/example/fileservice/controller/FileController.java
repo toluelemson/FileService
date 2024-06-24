@@ -6,12 +6,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,3 +84,32 @@ public class FileController {
 
     }
 
+    @GetMapping("/{token}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String token) {
+        File file = fileService.getFile(token);
+        if (file == null) {
+            return ResponseEntity.status(404).body(null);
+        }
+
+        Path path = file.toPath();
+        Resource resource;
+        try {
+            resource = new UrlResource(path.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.status(404).body(null);
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(null);
+        }
+
+        FileMetadata metadata = fileService.getMetadata(UUID.fromString(token));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+                .header("X-Filename", file.getName())
+                .header("X-Filesize", String.valueOf(file.length()))
+                .header("X-CreateTime", metadata.getCreateTime().toInstant().toString())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+}

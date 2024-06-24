@@ -84,4 +84,43 @@ class FileControllerTest {
 
         mockMvc.perform(post("/api/file/metas").contentType("application/json").content(objectMapper.writeValueAsString(requestBody))).andExpect(status().isOk()).andExpect(jsonPath("$.token." + token1 + ".filename", is("ExampleName"))).andExpect(jsonPath("$.token." + token1 + ".size", is(51510))).andExpect(jsonPath("$.token." + token1 + ".contentType", is("application/pdf"))).andExpect(jsonPath("$.token." + token1 + ".meta.description", is("Sample file"))).andExpect(jsonPath("$.token." + token1 + ".meta.tags[0]", is("tag1"))).andExpect(jsonPath("$.token." + token1 + ".meta.tags[1]", is("tag2"))).andExpect(jsonPath("$.token." + token2 + ".filename", is("ExampleName"))).andExpect(jsonPath("$.token." + token2 + ".size", is(51510))).andExpect(jsonPath("$.token." + token2 + ".contentType", is("application/pdf"))).andExpect(jsonPath("$.token." + token2 + ".meta.description", is("Sample file"))).andExpect(jsonPath("$.token." + token2 + ".meta.tags[0]", is("tag1"))).andExpect(jsonPath("$.token." + token2 + ".meta.tags[1]", is("tag2")));
     }
+
+    @Test
+    void testDownloadFile() throws Exception {
+        String token = UUID.randomUUID().toString();
+        File file = new File("uploads/mockToken_test.pdf");
+        Path path = Paths.get(file.getAbsolutePath());
+
+        Files.createDirectories(path.getParent());
+        Files.createFile(path);
+
+        Files.write(path, "Test content".getBytes());
+
+        FileMetadata metadata = new FileMetadata(
+                UUID.fromString(token),
+                file.getName(),
+                "application/octet-stream",
+                file.length(),
+                new Date(),
+                Map.of("description", "Sample file", "tags", Arrays.asList("tag1", "tag2")),
+                "source",
+                new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24),
+                path.toString(),
+                UUID.fromString(token)
+        );
+
+        when(fileService.getFile(token)).thenReturn(file);
+        when(fileService.getMetadata(UUID.fromString(token))).thenReturn(metadata);
+
+        mockMvc.perform(get("/api/file/" + token))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\""))
+                .andExpect(header().string("X-Filename", file.getName()))
+                .andExpect(header().string("X-Filesize", String.valueOf(file.length())))
+                .andExpect(header().string("X-CreateTime", metadata.getCreateTime().toInstant().toString()))
+                .andExpect(content().contentType("application/octet-stream"))
+                .andExpect(content().bytes(Files.readAllBytes(path)));
+
+        Files.deleteIfExists(path);
+    }
 }
