@@ -1,5 +1,6 @@
 package com.example.fileservice.controller;
 
+import com.example.fileservice.model.FileMetadata;
 import com.example.fileservice.service.FileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/file")
@@ -53,5 +55,26 @@ public class FileController {
             return ResponseEntity.status(400).body(errorResponse);
         }
     }
-}
+
+    @PostMapping("/metas")
+    public ResponseEntity<Map<String, Object>> getFileMetadata(@RequestBody Map<String, List<String>> request) {
+        List<String> tokens = request.get("tokens");
+        List<UUID> uuids = tokens.stream().map(UUID::fromString).collect(Collectors.toList());
+        Map<String, FileMetadata> metadataMap = fileService.getMetadataByTokens(uuids);
+
+        Map<String, Object> response = metadataMap.entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> Map.of(
+                        "token", entry.getKey(),
+                        "filename", entry.getValue().getName(),
+                        "size", entry.getValue().getSize(),
+                        "contentType", entry.getValue().getContentType(),
+                        "createTime", entry.getValue().getCreateTime().toInstant().toString(),
+                        "meta", entry.getValue().getMeta()
+                )
+        ));
+
+        return ResponseEntity.ok(Map.of("token", response));
+
+    }
 
