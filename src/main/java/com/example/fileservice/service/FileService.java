@@ -1,18 +1,23 @@
 package com.example.fileservice.service;
 
+import com.example.fileservice.controller.FileController;
+import com.example.fileservice.exception.ResourceNotFoundException;
 import com.example.fileservice.model.FileMetadata;
 import com.example.fileservice.repository.FileMetadataRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-
+import java.util.stream.Collectors;
 
 @Service
 public class FileService {
@@ -51,6 +56,24 @@ public class FileService {
         fileMetadataRepository.save(metadata);
 
         return token;
+    }
+
+    public FileMetadata getMetadata(UUID token) {
+        List<FileMetadata> metadataList = fileMetadataRepository.findByTokenIn(Collections.singletonList(token));
+        return metadataList.isEmpty() ? null : metadataList.get(0);
+    }
+
+    public File getFile(String token) {
+        FileMetadata metadata = getMetadata(UUID.fromString(token));
+        return metadata != null ? new File(metadata.getPath()) : null;
+    }
+
+    public Map<String, FileMetadata> getMetadataByTokens(List<UUID> tokens) {
+        List<FileMetadata> metadataList = fileMetadataRepository.findByTokenIn(tokens);
+        return metadataList.stream().collect(Collectors.toMap(
+                metadata -> metadata.getToken().toString(),
+                metadata -> metadata
+        ));
     }
 
 }
