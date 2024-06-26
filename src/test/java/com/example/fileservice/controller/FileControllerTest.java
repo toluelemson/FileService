@@ -83,11 +83,30 @@ class FileControllerTest {
         String requestJson = objectMapper.writeValueAsString(requestBody);
         System.out.println("Request JSON: " + requestJson);
 
-        String responseJson = mockMvc.perform(post("/api/file/metas").contentType("application/json").content(requestJson)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String responseJson = mockMvc.perform(post("/api/file/metas")
+                        .contentType("application/json")
+                        .content(requestJson))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        System.out.println("Response JSON: " + responseJson);
-
-        mockMvc.perform(post("/api/file/metas").contentType("application/json").content(objectMapper.writeValueAsString(requestBody))).andExpect(status().isOk()).andExpect(jsonPath("$.token." + token1 + ".filename", is("ExampleName"))).andExpect(jsonPath("$.token." + token1 + ".size", is(51510))).andExpect(jsonPath("$.token." + token1 + ".contentType", is("application/pdf"))).andExpect(jsonPath("$.token." + token1 + ".meta.description", is("Sample file"))).andExpect(jsonPath("$.token." + token1 + ".meta.tags[0]", is("tag1"))).andExpect(jsonPath("$.token." + token1 + ".meta.tags[1]", is("tag2"))).andExpect(jsonPath("$.token." + token2 + ".filename", is("ExampleName"))).andExpect(jsonPath("$.token." + token2 + ".size", is(51510))).andExpect(jsonPath("$.token." + token2 + ".contentType", is("application/pdf"))).andExpect(jsonPath("$.token." + token2 + ".meta.description", is("Sample file"))).andExpect(jsonPath("$.token." + token2 + ".meta.tags[0]", is("tag1"))).andExpect(jsonPath("$.token." + token2 + ".meta.tags[1]", is("tag2")));
+        mockMvc.perform(post("/api/file/metas")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.files." + token1 + ".filename", is("ExampleName")))
+                .andExpect(jsonPath("$.files." + token1 + ".size", is(51510)))
+                .andExpect(jsonPath("$.files." + token1 + ".contentType", is("application/pdf")))
+                .andExpect(jsonPath("$.files." + token1 + ".meta.description", is("Sample file")))
+                .andExpect(jsonPath("$.files." + token1 + ".meta.tags[0]", is("tag1")))
+                .andExpect(jsonPath("$.files." + token1 + ".meta.tags[1]", is("tag2")))
+                .andExpect(jsonPath("$.files." + token2 + ".filename", is("ExampleName")))
+                .andExpect(jsonPath("$.files." + token2 + ".size", is(51510)))
+                .andExpect(jsonPath("$.files." + token2 + ".contentType", is("application/pdf")))
+                .andExpect(jsonPath("$.files." + token2 + ".meta.description", is("Sample file")))
+                .andExpect(jsonPath("$.files." + token2 + ".meta.tags[0]", is("tag1")))
+                .andExpect(jsonPath("$.files." + token2 + ".meta.tags[1]", is("tag2")));
     }
 
     @Test

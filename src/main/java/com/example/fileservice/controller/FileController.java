@@ -61,23 +61,37 @@ public class FileController {
 
     @PostMapping("/metas")
     public ResponseEntity<Map<String, Object>> getFileMetadata(@RequestBody Map<String, List<String>> request) {
-        List<String> tokens = request.get("tokens");
-        List<UUID> uuids = tokens.stream().map(UUID::fromString).collect(Collectors.toList());
-        Map<String, FileMetadata> metadataMap = fileService.getMetadataByTokens(uuids);
+        try {
+            List<String> tokens = request.get("tokens");
+            if (tokens == null || tokens.isEmpty()) {
+                throw new IllegalArgumentException("Tokens list cannot be null or empty");
+            }
 
-        Map<String, Object> response = metadataMap.entrySet().stream().collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> Map.of(
-                        "token", entry.getKey(),
-                        "filename", entry.getValue().getName(),
-                        "size", entry.getValue().getSize(),
-                        "contentType", entry.getValue().getContentType(),
-                        "createTime", entry.getValue().getCreateTime().toInstant().toString(),
-                        "meta", entry.getValue().getMeta()
-                )
-        ));
+            List<UUID> uuids = tokens.stream().map(UUID::fromString).collect(Collectors.toList());
 
-        return ResponseEntity.ok(Map.of("token", response));
+            Map<String, FileMetadata> metadataMap = fileService.getMetadataByTokens(uuids);
+
+            Map<String, Object> response = metadataMap.entrySet().stream().collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry -> Map.of(
+                            "token", entry.getKey(),
+                            "filename", entry.getValue().getName(),
+                            "size", entry.getValue().getSize(),
+                            "contentType", entry.getValue().getContentType(),
+                            "createTime", entry.getValue().getCreateTime().toInstant().toString(),
+                            "meta", entry.getValue().getMeta()
+                    )
+            ));
+
+            return ResponseEntity.ok(Map.of("files", response));
+        } catch (IllegalArgumentException e) {
+            customLogger.error("Bad Request: " + e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            customLogger.logCritical(e);
+            return ResponseEntity.status(503).body(Map.of("error", "Internal server error: " + e.getMessage()));
+        }
+    }
 
     }
 
