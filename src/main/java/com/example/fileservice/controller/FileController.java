@@ -1,6 +1,8 @@
 package com.example.fileservice.controller;
 
 import com.example.fileservice.dto.FileUploadRequest;
+import com.example.fileservice.exception.ErrorResponse;
+import com.example.fileservice.exception.ResourceNotFoundException;
 import com.example.fileservice.model.FileMetadata;
 import com.example.fileservice.service.FileService;
 import com.example.fileservice.util.CustomLogger;
@@ -9,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,16 +49,16 @@ public class FileController {
             Map<String, String> response = new HashMap<>();
             response.put("token", token);
             customLogger.info("File uploaded successfully: " + request.getName());
-            return ResponseEntity.status(201).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IOException e) {
             customLogger.error("Failed to upload file: " + e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid meta data: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid meta data: " + e.getMessage()));
         } catch (IllegalArgumentException e) {
             customLogger.error("Invalid argument: " + e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             customLogger.logCritical(e);
-            return ResponseEntity.status(503).body(Map.of("error", "Internal server error: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
 
@@ -68,7 +71,6 @@ public class FileController {
             }
 
             List<UUID> uuids = tokens.stream().map(UUID::fromString).collect(Collectors.toList());
-
             Map<String, FileMetadata> metadataMap = fileService.getMetadataByTokens(uuids);
 
             Map<String, Object> response = metadataMap.entrySet().stream().collect(Collectors.toMap(
@@ -86,42 +88,41 @@ public class FileController {
             return ResponseEntity.ok(Map.of("files", response));
         } catch (IllegalArgumentException e) {
             customLogger.error("Bad Request: " + e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             customLogger.logCritical(e);
-            return ResponseEntity.status(503).body(Map.of("error", "Internal server error: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
 
-    }
-
     @GetMapping("/{token}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String token) {
+    public ResponseEntity<?> downloadFile(@PathVariable String token) {
         try {
             File file = fileService.getFile(token);
             if (file == null) {
-                throw new IllegalArgumentException("File not found for token: " + token);
+                throw new ResourceNotFoundException("File not found for token: " + token);
             }
 
             Path path = file.toPath();
             Resource resource = new UrlResource(path.toUri());
             if (!resource.exists() || !resource.isReadable()) {
-                throw new IllegalArgumentException("File not readable for token: " + token);
+                throw new ResourceNotFoundException("File not readable for token: " + token);
             }
 
             FileMetadata metadata = fileService.getMetadata(UUID.fromString(token));
 
-            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
                     .header("X-Filename", file.getName())
                     .header("X-Filesize", String.valueOf(file.length()))
                     .header("X-CreateTime", metadata.getCreateTime().toInstant().toString())
                     .body(resource);
-        } catch (IllegalArgumentException e) {
-            customLogger.error("Bad Request: " + e.getMessage(), e);
-            return ResponseEntity.badRequest().body(null);
+        } catch (ResourceNotFoundException e) {
+            customLogger.error("File Not Found: " + e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getErrorCode(), e.getMessage()));
         } catch (Exception e) {
             customLogger.logCritical(e);
-            return ResponseEntity.status(503).body(null);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponse("SERVICE_UNAVAILABLE", "The service is currently unavailable. Please try again later."));
         }
     }
 
