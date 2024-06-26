@@ -1,64 +1,61 @@
 package com.example.fileservice.controller;
 
+import com.example.fileservice.dto.FileUploadRequest;
 import com.example.fileservice.model.FileMetadata;
 import com.example.fileservice.service.FileService;
+import com.example.fileservice.util.CustomLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/file")
+@Validated
 public class FileController {
-
-    private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
     private final FileService fileService;
     private final ObjectMapper objectMapper;
+    private final CustomLogger customLogger;
 
-    public FileController(FileService fileService, ObjectMapper objectMapper) {
+    public FileController(FileService fileService, ObjectMapper objectMapper, CustomLogger customLogger) {
         this.fileService = fileService;
         this.objectMapper = objectMapper;
+        this.customLogger = customLogger;
     }
 
-
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadFile(
-            @RequestParam("name") String name,
-            @RequestParam("contentType") String contentType,
-            @RequestParam("meta") String meta,
-            @RequestParam("source") String source,
-            @RequestParam(value = "expireTime", required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date expireTime,
-            @RequestParam("content") MultipartFile file) {
-
+    public ResponseEntity<Map<String, String>> uploadFile(@Valid @ModelAttribute FileUploadRequest request) {
         try {
-            Map<String, Object> metaMap = objectMapper.readValue(meta, Map.class);
-            String token = fileService.uploadFile(name, contentType, metaMap, source, expireTime, file);
+            Map<String, Object> metaMap = objectMapper.readValue(request.getMeta(), Map.class);
+            String token = fileService.uploadFile(request.getName(), request.getContentType(), metaMap, request.getSource(), request.getExpireTime(), request.getContent());
+
             Map<String, String> response = new HashMap<>();
             response.put("token", token);
-            logger.info("File uploaded successfully: {}", name);
+            customLogger.info("File uploaded successfully: " + request.getName());
             return ResponseEntity.status(201).body(response);
-
         } catch (IOException e) {
-            logger.error("Failed to upload file: {}", e.getMessage(), e);
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Failed to upload file: " + e.getMessage());
-            return ResponseEntity.status(400).body(errorResponse);
+            customLogger.error("Failed to upload file: " + e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid meta data: " + e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            customLogger.error("Invalid argument: " + e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            customLogger.logCritical(e);
+            return ResponseEntity.status(503).body(Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
 

@@ -2,6 +2,7 @@ package com.example.fileservice.controller;
 
 import com.example.fileservice.model.FileMetadata;
 import com.example.fileservice.service.FileService;
+import com.example.fileservice.util.CustomLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,8 +12,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -35,15 +34,15 @@ class FileControllerTest {
     @MockBean
     private FileService fileService;
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+    @MockBean
+    private CustomLogger customLogger;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setup() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
+
     }
 
     @Test
@@ -56,7 +55,13 @@ class FileControllerTest {
 
         when(fileService.uploadFile(any(), any(), any(), any(), any(), any())).thenReturn(mockToken);
 
-        mockMvc.perform(multipart("/api/file/upload").file(file).param("name", "test.txt").param("contentType", "text/plain").param("meta", meta).param("source", source).param("expireTime", expireTime))
+        mockMvc.perform(multipart("/api/file/upload")
+                        .file(file)
+                        .param("name", "test.txt")
+                        .param("contentType", "text/plain")
+                        .param("meta", meta)
+                        .param("source", source)
+                        .param("expireTime", expireTime))
                 .andExpect(status().isCreated());
     }
 
