@@ -125,10 +125,21 @@ public class FileController {
         }
     }
 
-
     @DeleteMapping("/{token}")
-    public ResponseEntity<Void> deleteFile(@PathVariable UUID token) {
-        fileService.deleteFileByToken(token);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ErrorResponse> deleteFile(@PathVariable UUID token) {
+        try {
+            boolean isDeleted = fileService.deleteFileByToken(token);
+            if (!isDeleted) {
+                throw new ResourceNotFoundException("File not found for token: " + token);
+            }
+            customLogger.info("File deleted successfully for token: " + token);
+            return ResponseEntity.noContent().build();
+        } catch (ResourceNotFoundException e) {
+            customLogger.error("File Not Found: " + e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getErrorCode(), e.getMessage()));
+        } catch (Exception e) {
+            customLogger.logCritical(e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponse("SERVICE_UNAVAILABLE", "The service is currently unavailable. Please try again later."));
+        }
     }
 }

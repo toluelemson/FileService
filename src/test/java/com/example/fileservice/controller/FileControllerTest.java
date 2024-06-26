@@ -149,6 +149,9 @@ class FileControllerTest {
     void testDeleteFile() throws Exception {
         UUID token = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/file/" + token)).andExpect(status().isNoContent());
+        when(fileService.deleteFileByToken(token)).thenReturn(true);
+
+        mockMvc.perform(delete("/api/file/" + token))
+                .andExpect(status().isNoContent());
     }
 }
