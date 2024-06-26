@@ -97,31 +97,32 @@ public class FileController {
 
     @GetMapping("/{token}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String token) {
-        File file = fileService.getFile(token);
-        if (file == null) {
-            return ResponseEntity.status(404).body(null);
-        }
-
-        Path path = file.toPath();
-        Resource resource;
         try {
-            resource = new UrlResource(path.toUri());
-            if (!resource.exists() || !resource.isReadable()) {
-                return ResponseEntity.status(404).body(null);
+            File file = fileService.getFile(token);
+            if (file == null) {
+                throw new IllegalArgumentException("File not found for token: " + token);
             }
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body(null);
+
+            Path path = file.toPath();
+            Resource resource = new UrlResource(path.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new IllegalArgumentException("File not readable for token: " + token);
+            }
+
+            FileMetadata metadata = fileService.getMetadata(UUID.fromString(token));
+
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+                    .header("X-Filename", file.getName())
+                    .header("X-Filesize", String.valueOf(file.length()))
+                    .header("X-CreateTime", metadata.getCreateTime().toInstant().toString())
+                    .body(resource);
+        } catch (IllegalArgumentException e) {
+            customLogger.error("Bad Request: " + e.getMessage(), e);
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            customLogger.logCritical(e);
+            return ResponseEntity.status(503).body(null);
         }
-
-        FileMetadata metadata = fileService.getMetadata(UUID.fromString(token));
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
-                .header("X-Filename", file.getName())
-                .header("X-Filesize", String.valueOf(file.length()))
-                .header("X-CreateTime", metadata.getCreateTime().toInstant().toString())
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
     }
 
 

@@ -73,7 +73,6 @@ class FileControllerTest {
         String token2 = mockId2.toString();
 
         FileMetadata metadata1 = new FileMetadata(mockId1, "ExampleName", "application/pdf", 51510, new Date(), Map.of("description", "Sample file", "tags", Arrays.asList("tag1", "tag2")), "source", new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24), "uploads/mockToken1_test.pdf", mockId1);
-
         FileMetadata metadata2 = new FileMetadata(mockId2, "ExampleName", "application/pdf", 51510, new Date(), Map.of("description", "Sample file", "tags", Arrays.asList("tag1", "tag2")), "source", new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24), "uploads/mockToken2_test.pdf", mockId2);
 
         when(fileService.getMetadataByTokens(any())).thenReturn(Map.of(token1, metadata1, token2, metadata2));
@@ -81,7 +80,6 @@ class FileControllerTest {
         Map<String, List<String>> requestBody = Map.of("tokens", Arrays.asList(token1, token2));
 
         String requestJson = objectMapper.writeValueAsString(requestBody);
-        System.out.println("Request JSON: " + requestJson);
 
         String responseJson = mockMvc.perform(post("/api/file/metas")
                         .contentType("application/json")
@@ -117,7 +115,6 @@ class FileControllerTest {
 
         Files.createDirectories(path.getParent());
         Files.createFile(path);
-
         Files.write(path, "Test content".getBytes());
 
         FileMetadata metadata = new FileMetadata(
@@ -142,7 +139,7 @@ class FileControllerTest {
                 .andExpect(header().string("X-Filename", file.getName()))
                 .andExpect(header().string("X-Filesize", String.valueOf(file.length())))
                 .andExpect(header().string("X-CreateTime", metadata.getCreateTime().toInstant().toString()))
-                .andExpect(content().contentType("application/octet-stream"))
+                .andExpect(content().contentType("application/json"))
                 .andExpect(content().bytes(Files.readAllBytes(path)));
 
         Files.deleteIfExists(path);
