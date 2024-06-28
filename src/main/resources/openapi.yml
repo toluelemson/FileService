@@ -1,0 +1,193 @@
+openapi: 3.1.0
+info:
+  title: File Service API
+  description: API for managing file uploads, downloads, and metadata.
+  version: 1.0.0
+paths:
+  /api/file/upload:
+    post:
+      summary: Upload a file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                contentType:
+                  type: string
+                meta:
+                  type: string
+                source:
+                  type: string
+                expireTime:
+                  type: string
+                content:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Invalid metadata or argument
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '503':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/file/metas:
+    post:
+      summary: Get metadata for files
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tokens:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        token:
+                          type: string
+                        filename:
+                          type: string
+                        size:
+                          type: integer
+                        contentType:
+                          type: string
+                        createTime:
+                          type: string
+                        meta:
+                          type: object
+        '400':
+          description: Invalid tokens list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '503':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/file/{token}:
+    get:
+      summary: Download a file
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File downloaded successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+            X-Filename:
+              schema:
+                type: string
+            X-Filesize:
+              schema:
+                type: integer
+            X-CreateTime:
+              schema:
+                type: string
+        '404':
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a file
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: File deleted successfully
+        '404':
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: string
+        message:
+          type: string
