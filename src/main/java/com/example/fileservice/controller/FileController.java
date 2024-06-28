@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -44,7 +41,8 @@ public class FileController {
     public ResponseEntity<Map<String, String>> uploadFile(@Valid @ModelAttribute FileUploadRequest request) {
         try {
             Map<String, Object> metaMap = objectMapper.readValue(request.getMeta(), Map.class);
-            String token = fileService.uploadFile(request.getName(), request.getContentType(), metaMap, request.getSource(), request.getExpireTime(), request.getContent());
+            String token = fileService.uploadFile(request.getName(), request.getContentType(), metaMap,
+                    request.getSource(), request.getExpireTime(), request.getContent());
 
             Map<String, String> response = new HashMap<>();
             response.put("token", token);
@@ -58,7 +56,7 @@ public class FileController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             customLogger.logCritical(e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Internal server error: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
 
@@ -91,7 +89,7 @@ public class FileController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             customLogger.logCritical(e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Internal server error: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
 
@@ -122,7 +120,7 @@ public class FileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getErrorCode(), e.getMessage()));
         } catch (Exception e) {
             customLogger.logCritical(e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponse("SERVICE_UNAVAILABLE", "The service is currently unavailable. Please try again later."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("SERVICE_UNAVAILABLE", "The service is currently unavailable. Please try again later."));
         }
     }
 
@@ -140,7 +138,7 @@ public class FileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getErrorCode(), e.getMessage()));
         } catch (Exception e) {
             customLogger.logCritical(e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponse("SERVICE_UNAVAILABLE", "The service is currently unavailable. Please try again later."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("SERVICE_UNAVAILABLE", "The service is currently unavailable. Please try again later."));
         }
     }
 }
