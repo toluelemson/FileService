@@ -82,11 +82,15 @@ public class FileService {
     public File getFile(String token) {
         FileMetadata metadata = getMetadata(UUID.fromString(token));
         File file = new File(metadata.getPath());
-        if (!file.exists() || !file.canRead()) {
-            throw new ResourceNotFoundException("File not readable for token: " + token);
+        if (!file.exists()) {
+            throw new ResourceNotFoundException("File does not exist for token: " + token);
+        }
+        if (!file.canRead()) {
+            throw new ResourceNotFoundException("File cannot be read for token: " + token);
         }
         return file;
     }
+
 
     @Transactional(readOnly = true)
     public Map<String, FileMetadata> getMetadataByTokens(List<UUID> tokens) {
