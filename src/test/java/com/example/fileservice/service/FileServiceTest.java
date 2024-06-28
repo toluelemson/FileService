@@ -68,9 +68,7 @@ class FileServiceTest {
 
         when(file.getInputStream()).thenThrow(new IOException("File copy failed"));
 
-        IOException exception = assertThrows(IOException.class, () -> {
-            fileService.uploadFile(name, contentType, meta, source, expireTime, file);
-        });
+        IOException exception = assertThrows(IOException.class, () -> fileService.uploadFile(name, contentType, meta, source, expireTime, file));
 
         assertEquals("Failed to store file", exception.getMessage());
         verify(customLogger).error(contains("Failed to store file"), any(IOException.class));
@@ -106,9 +104,7 @@ class FileServiceTest {
 
         when(fileMetadataRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.emptyList());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-            fileService.getMetadata(token);
-        });
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> fileService.getMetadata(token));
 
         assertEquals("File metadata not found for token: " + token, exception.getMessage());
     }
@@ -141,18 +137,14 @@ class FileServiceTest {
             }
         }).when(fileServiceHelperSpy).createFile(anyString());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-            fileService.getFile(token.toString());
-        });
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> fileService.getFile(token.toString()));
 
         assertEquals("File not readable for token: " + token, exception.getMessage());
     }
 
     @Test
-    void testDeleteFileByToken_Success() throws IOException {
+    void testDeleteFileByToken_Success() {
         UUID token = UUID.randomUUID();
-        MultipartFile file = new MockMultipartFile("file", "example.txt", "text/plain", "Hello, World!".getBytes());
-
         String name = "example.txt";
         String contentType = "text/plain";
         long size = 1234L;
