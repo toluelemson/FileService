@@ -135,7 +135,7 @@ class FileServiceTest {
             public boolean exists() {
                 return false;
             }
-        }).when(fileServiceHelperSpy).createFile(anyString());
+        }).when(fileServiceHelperSpy).createFile();
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> fileService.getFile(token.toString()));
 

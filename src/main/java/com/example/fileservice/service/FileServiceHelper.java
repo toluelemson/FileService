@@ -4,6 +4,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class FileServiceHelper {
-    public void createFile(String path) {
+    public void createFile() {
     }
 }
