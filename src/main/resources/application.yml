@@ -9,3 +9,12 @@ spring:
     multipart:
       max-file-size: 16MB
       max-request-size: 16MB
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  default-produces-media-type: application/json
+  paths-to-match: /api/**
+  packages-to-scan: com.example.fileservice.controller
