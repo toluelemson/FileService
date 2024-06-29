@@ -32,7 +32,7 @@ build/
 .vscode/
 
 # Ignore .java files
-*.kt
+*.Java
 
 .mvn/
-src/main/kotlin/
+src/main/Java/
