@@ -1,8 +1,8 @@
 package com.example.fileservice.controller;
 
-import com.example.fileservice.model.FileMetadata;
+import com.example.fileservice.data.entities.Entity;
 import com.example.fileservice.service.FileService;
-import com.example.fileservice.util.CustomLogger;
+import com.example.fileservice.library.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class FileControllerTest {
     private FileService fileService;
 
     @MockBean
-    private CustomLogger customLogger;
+    private  Logger customLogger;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -72,8 +72,8 @@ class FileControllerTest {
         String token1 = mockId1.toString();
         String token2 = mockId2.toString();
 
-        FileMetadata metadata1 = new FileMetadata(mockId1, "ExampleName", "application/pdf", 51510, new Date(), Map.of("description", "Sample file", "tags", Arrays.asList("tag1", "tag2")), "source", new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24), "uploads/mockToken1_test.pdf", mockId1);
-        FileMetadata metadata2 = new FileMetadata(mockId2, "ExampleName", "application/pdf", 51510, new Date(), Map.of("description", "Sample file", "tags", Arrays.asList("tag1", "tag2")), "source", new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24), "uploads/mockToken2_test.pdf", mockId2);
+        Entity metadata1 = new Entity(mockId1, "ExampleName", "application/pdf", 51510, new Date(), Map.of("description", "Sample file", "tags", Arrays.asList("tag1", "tag2")), "source", new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24), "uploads/mockToken1_test.pdf", mockId1);
+        Entity metadata2 = new Entity(mockId2, "ExampleName", "application/pdf", 51510, new Date(), Map.of("description", "Sample file", "tags", Arrays.asList("tag1", "tag2")), "source", new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24), "uploads/mockToken2_test.pdf", mockId2);
 
         when(fileService.getMetadataByTokens(any())).thenReturn(Map.of(token1, metadata1, token2, metadata2));
 
@@ -117,7 +117,7 @@ class FileControllerTest {
         Files.createFile(path);
         Files.write(path, "Test content".getBytes());
 
-        FileMetadata metadata = new FileMetadata(
+        Entity metadata = new Entity(
                 UUID.fromString(token),
                 file.getName(),
                 "application/octet-stream",

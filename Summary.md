@@ -25,7 +25,7 @@ cd fileservice
 Ensure the `start_services.sh` script is executable. Run the following command:
 
 ```sh
-chmod +x start_services.sh
+chmod +x do.sh
 ```
 
 ### Step 3: Start the Services
@@ -33,7 +33,7 @@ chmod +x start_services.sh
 Use the provided script to start the services. This script will build and start the Spring Boot application, MongoDB, and Mongo Express:
 
 ```sh
-./start_services.sh
+./do.sh
 ```
 
 ### Step 4: Access the Services

@@ -1,4 +1,4 @@
-package com.example.fileservice.model;
+package com.example.fileservice.data.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @Document(collection = "files")
 @Getter
 @AllArgsConstructor
-public class FileMetadata {
+public class Entity {
 
     @Id
     private UUID id;

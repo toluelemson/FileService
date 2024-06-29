@@ -1,9 +1,10 @@
 package com.example.fileservice.service;
 
-import com.example.fileservice.exception.ResourceNotFoundException;
-import com.example.fileservice.model.FileMetadata;
-import com.example.fileservice.repository.FileMetadataRepository;
-import com.example.fileservice.util.CustomLogger;
+import com.example.fileservice.controller.exception.NotFoundException;
+import com.example.fileservice.data.entities.Entity;
+import com.example.fileservice.data.repository.EntityRepository;
+import com.example.fileservice.library.LogItem;
+import com.example.fileservice.library.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -16,19 +17,20 @@ import java.nio.file.*;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class FileServiceTest {
 
     @Mock
-    private FileMetadataRepository fileMetadataRepository;
+    private EntityRepository entityRepository;
 
     @InjectMocks
     private FileServiceHelper fileServiceHelper;
 
     @Mock
-    private CustomLogger customLogger;
+    private Logger logger;
 
     @InjectMocks
     private FileService fileService;
@@ -50,8 +52,13 @@ class FileServiceTest {
         String token = fileService.uploadFile(name, contentType, meta, source, expireTime, file);
 
         assertNotNull(token);
-        verify(customLogger).info(contains("File uploaded successfully"));
-        verify(fileMetadataRepository).save(any(FileMetadata.class));
+        ArgumentCaptor<LogItem> captor = forClass(LogItem.class);
+        verify(logger).info(captor.capture());
+
+        LogItem capturedLogItem = captor.getValue();
+        assertTrue(capturedLogItem.getMessage().contains("File uploaded successfully"));
+
+        verify(entityRepository).save(any(Entity.class));
 
         Path targetLocation = Paths.get("storage").resolve(token);
         Files.deleteIfExists(targetLocation);
@@ -71,7 +78,12 @@ class FileServiceTest {
         IOException exception = assertThrows(IOException.class, () -> fileService.uploadFile(name, contentType, meta, source, expireTime, file));
 
         assertEquals("Failed to store file", exception.getMessage());
-        verify(customLogger).error(contains("Failed to store file"), any(IOException.class));
+
+        ArgumentCaptor<LogItem> captor = forClass(LogItem.class);
+        verify(logger).error(captor.capture());
+
+        LogItem capturedLogItem = captor.getValue();
+        assertTrue(capturedLogItem.getMessage().contains("File copy failed"));
     }
 
     @Test
@@ -88,11 +100,11 @@ class FileServiceTest {
         Date expireTime = new Date(createTime.getTime() + 10000);
         String path = "storage/" + token;
 
-        FileMetadata metadata = new FileMetadata(UUID.randomUUID(), name, contentType, size, createTime, meta, source, expireTime, path, token);
+        Entity metadata = new Entity(UUID.randomUUID(), name, contentType, size, createTime, meta, source, expireTime, path, token);
 
-        when(fileMetadataRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.singletonList(metadata));
+        when(entityRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.singletonList(metadata));
 
-        FileMetadata result = fileService.getMetadata(token);
+        Entity result = fileService.getMetadata(token);
 
         assertNotNull(result);
         assertEquals(metadata, result);
@@ -102,9 +114,9 @@ class FileServiceTest {
     void testGetMetadata_NotFound() {
         UUID token = UUID.randomUUID();
 
-        when(fileMetadataRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.emptyList());
+        when(entityRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.emptyList());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> fileService.getMetadata(token));
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> fileService.getMetadata(token));
 
         assertEquals("File metadata not found for token: " + token, exception.getMessage());
     }
@@ -123,12 +135,12 @@ class FileServiceTest {
         Date expireTime = new Date(createTime.getTime() + 10000);
         String path = "storage/" + token;
 
-        FileMetadata metadata = new FileMetadata(UUID.randomUUID(), name, contentType, size, createTime, meta, source, expireTime, path, token);
+        Entity metadata = new Entity(UUID.randomUUID(), name, contentType, size, createTime, meta, source, expireTime, path, token);
 
-        when(fileMetadataRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.singletonList(metadata));
+        when(entityRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.singletonList(metadata));
 
         FileServiceHelper fileServiceHelperSpy = spy(fileServiceHelper);
-        FileService fileService = new FileService(fileMetadataRepository, customLogger);
+        FileService fileService = new FileService(entityRepository);
 
         doReturn(new File(path) {
             @Override
@@ -137,7 +149,7 @@ class FileServiceTest {
             }
         }).when(fileServiceHelperSpy).createFile();
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> fileService.getFile(token.toString()));
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> fileService.getFile(token.toString()));
 
         assertEquals("File not readable for token: " + token, exception.getMessage());
     }
@@ -155,10 +167,10 @@ class FileServiceTest {
         Date expireTime = new Date(createTime.getTime() + 10000);
         String path = "storage/" + token;
 
-        FileMetadata metadata = new FileMetadata(UUID.randomUUID(), name, contentType, size, createTime, meta, source, expireTime, path, token);
+        Entity metadata = new Entity(UUID.randomUUID(), name, contentType, size, createTime, meta, source, expireTime, path, token);
 
-        when(fileMetadataRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.singletonList(metadata));
-        doNothing().when(fileMetadataRepository).deleteById(metadata.getToken());
+        when(entityRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.singletonList(metadata));
+        doNothing().when(entityRepository).deleteById(metadata.getToken());
 
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.deleteIfExists(Paths.get(path))).thenReturn(true);
@@ -166,8 +178,11 @@ class FileServiceTest {
             boolean result = fileService.deleteFileByToken(token);
 
             assertTrue(result);
-            verify(fileMetadataRepository, times(1)).deleteById(metadata.getToken());
-            verify(customLogger, times(1)).info("File deleted successfully for token: " + token);
+            verify(entityRepository, times(1)).deleteById(metadata.getToken());
+            ArgumentCaptor<LogItem> captor = forClass(LogItem.class);
+            verify(logger).info(captor.capture());
+            LogItem capturedLogItem = captor.getValue();
+            assertTrue(capturedLogItem.getMessage().contains("File deleted successfully for token: " + token));
         }
     }
 }
