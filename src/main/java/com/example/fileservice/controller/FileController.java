@@ -3,7 +3,6 @@ package com.example.fileservice.controller;
 import com.example.fileservice.dto.FileUploadRequest;
 import com.example.fileservice.controller.exception.InternalException;
 import com.example.fileservice.controller.exception.NotFoundException;
-import com.example.fileservice.library.Logger;
 import com.example.fileservice.rest.ErrorMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.example.fileservice.data.entities.Entity;
@@ -40,7 +39,7 @@ public class FileController {
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadFile(@Valid @ModelAttribute FileUploadRequest request) {
         try {
-            Map<String, Object> metaMap = objectMapper.readValue(request.getMeta(), new TypeReference<Map<String, Object>>() {
+            Map<String, Object> metaMap = objectMapper.readValue(request.getMeta(), new TypeReference<>() {
             });
             String token = fileService.uploadFile(request.getName(), request.getContentType(), metaMap, request.getSource(), request.getExpireTime(), request.getContent());
 

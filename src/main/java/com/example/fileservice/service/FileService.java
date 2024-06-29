@@ -30,7 +30,6 @@ public class FileService {
         try {
             Files.createDirectories(this.storageLocation);
         } catch (IOException e) {
-            ;
             throw new RuntimeException("Could not create storage directory", e);
         }
     }
