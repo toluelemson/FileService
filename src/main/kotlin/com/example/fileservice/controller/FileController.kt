@@ -1,24 +1,17 @@
 package com.example.fileservice.controller
 
-import com.example.fileservice.dto.FileUploadRequest
 import com.example.fileservice.controller.exception.InternalException
 import com.example.fileservice.controller.exception.NotFoundException
 import com.example.fileservice.data.dto.FileUploadRequest
 import com.example.fileservice.rest.ErrorMessage
 import com.example.fileservice.service.FileService
 import com.fasterxml.jackson.core.type.TypeReference
-import com.example.fileservice.data.entities.Entity
-import com.example.fileservice.service.FileService
 import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.validation.Valid
-import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
