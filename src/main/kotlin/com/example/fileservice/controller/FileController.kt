@@ -93,10 +93,9 @@ class FileController(
     fun downloadFile(@PathVariable token: String): ResponseEntity<*> {
         return try {
             val file = fileService.getFile(token)
-            file ?: throw NotFoundException("File not found for token: $token")
 
-            val path = file.toPath()
-            val resource: Resource = UrlResource(path.toUri())
+            val path: Path = file.toPath()
+            val resource = UrlResource(path.toUri())
             if (!resource.exists() || !resource.isReadable) {
                 throw NotFoundException("File not readable for token: $token")
             }
@@ -109,7 +108,9 @@ class FileController(
                 .header("X-CreateTime", metadata.createTime.toInstant().toString())
                 .body(resource)
         } catch (e: NotFoundException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorMessage(e.message))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorMessage(e.message ?: "File not found", "NOT_FOUND"))
+        } catch (e: IllegalArgumentException) {
+            throw e
         } catch (e: Exception) {
             throw InternalException("Internal server error: ${e.message}", e)
         }

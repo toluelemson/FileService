@@ -73,4 +73,18 @@ open class FileService @Autowired constructor(
         return entityRepository.findByTokenIn(listOf(token))
             .firstOrNull() ?: throw NotFoundException("File metadata not found for token: $token")
     }
+
+    @Transactional(readOnly = true)
+    open fun getFile(token: String): File {
+        val metadata = getMetadata(UUID.fromString(token))
+        val file = File(metadata.path)
+        if (!file.exists()) {
+            throw NotFoundException("File does not exist for token: $token")
+        }
+        if (!file.canRead()) {
+            throw NotFoundException("File cannot be read for token: $token")
+        }
+        return file
+    }
+
 }
