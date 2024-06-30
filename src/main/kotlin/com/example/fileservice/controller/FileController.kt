@@ -125,7 +125,9 @@ class FileController(
             }
             ResponseEntity.noContent().build()
         } catch (e: NotFoundException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorMessage(e.message))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorMessage(e.message ?: "File not found", "NOT_FOUND"))
+        } catch (e: IllegalArgumentException) {
+            throw e
         } catch (e: Exception) {
             throw InternalException("Internal server error: ${e.message}", e)
         }

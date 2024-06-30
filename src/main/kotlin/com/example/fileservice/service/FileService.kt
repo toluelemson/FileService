@@ -92,4 +92,17 @@ open class FileService @Autowired constructor(
         val metadataList = entityRepository.findByTokenIn(tokens)
         return metadataList.associateBy { it.token.toString() }
     }
+
+    @Transactional
+    open fun deleteFileByToken(token: UUID): Boolean {
+        val metadata = getMetadata(token)
+        entityRepository.deleteById(metadata.id)
+
+        return try {
+            Files.deleteIfExists(Paths.get(metadata.path))
+            true
+        } catch (e: IOException) {
+            throw RuntimeException("Failed to delete file", e)
+        }
+    }
 }
