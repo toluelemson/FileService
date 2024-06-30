@@ -87,4 +87,9 @@ open class FileService @Autowired constructor(
         return file
     }
 
+    @Transactional(readOnly = true)
+    open fun getMetadataByTokens(tokens: List<UUID>): Map<String, Entity> {
+        val metadataList = entityRepository.findByTokenIn(tokens)
+        return metadataList.associateBy { it.token.toString() }
+    }
 }
