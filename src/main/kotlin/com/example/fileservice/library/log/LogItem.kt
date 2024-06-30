@@ -5,9 +5,9 @@ import java.time.LocalDateTime
 open class LogItem constructor(
     val message: String
 ) {
-    val dateTime: LocalDateTime = LocalDateTime.now()
+    private val dateTime: LocalDateTime = LocalDateTime.now()
 
-    var correlationId: String? = null
+    private var correlationId: String? = null
     var type: String? = null
 
     override fun toString(): String {
