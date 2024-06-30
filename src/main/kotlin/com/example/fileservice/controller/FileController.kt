@@ -3,7 +3,9 @@ package com.example.fileservice.controller
 import com.example.fileservice.dto.FileUploadRequest
 import com.example.fileservice.controller.exception.InternalException
 import com.example.fileservice.controller.exception.NotFoundException
+import com.example.fileservice.data.dto.FileUploadRequest
 import com.example.fileservice.rest.ErrorMessage
+import com.example.fileservice.service.FileService
 import com.fasterxml.jackson.core.type.TypeReference
 import com.example.fileservice.data.entities.Entity
 import com.example.fileservice.service.FileService
@@ -20,26 +22,35 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
-import java.util.stream.Collectors
+import javax.validation.Valid
+
 
 @RestController
 @RequestMapping("/api/file")
-@Validated
 class FileController(
-    private val fileService: FileService,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val fileService: FileService
 ) {
 
     @PostMapping("/upload")
     fun uploadFile(@Valid @ModelAttribute request: FileUploadRequest): ResponseEntity<Map<String, String>> {
         return try {
-            val metaMap: Map<String, Any> = objectMapper.readValue(request.meta, object : TypeReference<Map<String, Any>>() {})
-            val token = fileService.uploadFile(request.name, request.contentType, metaMap, request.source, request.expireTime, request.content)
+            val metaMap: Map<String, Any> =
+                objectMapper.readValue(request.meta, object : TypeReference<Map<String, Any>>() {})
+
+            val token = fileService.uploadFile(
+                request.name,
+                request.contentType,
+                metaMap,
+                request.source,
+                request.expireTime!!,
+                request.content
+            )
 
             val response = mapOf("token" to token)
             ResponseEntity.status(HttpStatus.CREATED).body(response)
         } catch (e: IOException) {
-            throw IllegalArgumentException("Invalid meta data: ${e.message}", e)
+            throw IllegalArgumentException("${e.message}", e)
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {
