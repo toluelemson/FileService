@@ -68,14 +68,13 @@ class FileControllerTest {
     fun `uploadFile should return CREATED status and token in response`() {
         val token = "testToken"
 
-        // Prepare the meta map before the when block
         val metaMap: Map<String, Any> = objectMapper.readValue(
             fileUploadRequest.meta,
             object : com.fasterxml.jackson.core.type.TypeReference<Map<String, Any>>() {})
 
         `when`(
-            fileUploadRequest.name?.let {
-                fileUploadRequest.source?.let { it1 ->
+            fileUploadRequest.name.let {
+                fileUploadRequest.source.let { it1 ->
                     fileService.uploadFile(
                         it,
                         fileUploadRequest.contentType,
