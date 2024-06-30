@@ -3,7 +3,7 @@ spring:
     name: FileService
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI}
+      uri: mongodb://${MONGODB_USERNAME:admin}:${MONGODB_PASSWORD:password}@${MONGODB_HOST:localhost}:27017/filedb?authSource=admin
       authentication-database: admin
   servlet:
     multipart:
