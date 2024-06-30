@@ -35,4 +35,4 @@ build/
 *.Java
 
 .mvn/
-src/main/Java/
+/src/main/java/
