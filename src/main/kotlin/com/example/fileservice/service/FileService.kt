@@ -1,0 +1,76 @@
+package com.example.fileservice.service
+
+import com.example.fileservice.data.entities.Entity
+import com.example.fileservice.data.repository.EntityRepository
+import com.example.fileservice.controller.exception.NotFoundException
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
+import java.io.File
+import java.io.IOException
+import java.nio.file.*
+import java.util.*
+
+@Service
+open class FileService @Autowired constructor(
+    private val entityRepository: EntityRepository
+) {
+
+    private val storageLocation: Path = Paths.get("storage").toAbsolutePath().normalize()
+
+    init {
+        try {
+            Files.createDirectories(this.storageLocation)
+        } catch (e: IOException) {
+            throw RuntimeException("Could not create storage directory", e)
+        }
+    }
+
+    @Transactional
+    @Throws(IOException::class)
+    open fun uploadFile(
+        name: String,
+        contentType: String?,
+        meta: Map<String, Any>,
+        source: String,
+        expireTime: String,
+        file: MultipartFile?
+    ): String {
+        val token = UUID.randomUUID().toString()
+        val targetLocation = storageLocation.resolve(token)
+
+        try {
+            file?.inputStream?.use { inputStream ->
+                Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING)
+            }
+        } catch (e: IOException) {
+            throw IOException("Failed to store file", e)
+        }
+
+        val size = Files.size(targetLocation)
+        val createTime = Date()
+
+        val metadata = Entity(
+            id = UUID.randomUUID(),
+            name = name,
+            contentType = contentType ?: "application/octet-stream",
+            size = size,
+            createTime = createTime,
+            meta = meta,
+            source = source,
+            expireTime = expireTime,
+            path = targetLocation.toString(),
+            token = UUID.fromString(token)
+        )
+
+        entityRepository.save(metadata)
+        return token
+    }
+
+    @Transactional(readOnly = true)
+    open fun getMetadata(token: UUID): Entity {
+        return entityRepository.findByTokenIn(listOf(token))
+            .firstOrNull() ?: throw NotFoundException("File metadata not found for token: $token")
+    }
+}
