@@ -26,7 +26,6 @@ public class FileUploadRequest {
     private String source;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @NotNull(message = "Expire time cannot be null")
     private Date expireTime;
 
     @NotNull(message = "File content cannot be null")
