@@ -1,4 +1,4 @@
-package com.hrblizz.fileapi.library.log
+package com.example.fileservice.library.log
 
 import java.time.LocalDateTime
 

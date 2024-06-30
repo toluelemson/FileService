@@ -1,4 +1,4 @@
-package com.hrblizz.fileapi.data.entities
+package com.example.fileservice.data.entities
 
 import org.springframework.data.annotation.Id
 

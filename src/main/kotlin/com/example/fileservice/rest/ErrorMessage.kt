@@ -1,8 +1,4 @@
-package com.hrblizz.fileapi.rest
-
-class ErrorMessage {
-    var message: String? = null
-    var code: String? = null
+package com.example.fileservice.rest
 
     constructor() {}
 

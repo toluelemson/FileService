@@ -1,4 +1,4 @@
-package com.hrblizz.fileapi.controller.exception
+package com.example.fileservice.controller.exception
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ResponseStatus
