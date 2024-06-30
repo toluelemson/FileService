@@ -62,24 +62,25 @@ class FileController(
     fun getFileMetadata(@RequestBody request: Map<String, List<String>>): ResponseEntity<Map<String, Any>> {
         return try {
             val tokens = request["tokens"]
-            if (tokens.isNullOrEmpty()) {
+                ?: throw IllegalArgumentException("Tokens list cannot be null or empty")
+
+            if (tokens.isEmpty()) {
                 throw IllegalArgumentException("Tokens list cannot be null or empty")
             }
 
             val uuids = tokens.map { UUID.fromString(it) }
             val metadataMap = fileService.getMetadataByTokens(uuids)
 
-            val response = metadataMap.entries.associate {
-                it.key to mapOf(
-                    "token" to it.key,
-                    "filename" to it.value.name,
-                    "size" to it.value.size,
-                    "contentType" to it.value.contentType,
-                    "createTime" to it.value.createTime.toInstant().toString(),
-                    "meta" to it.value.meta
+            val response = metadataMap.entries.associate { (key, value) ->
+                key to mapOf(
+                    "token" to key,
+                    "filename" to value.name,
+                    "size" to value.size,
+                    "contentType" to value.contentType,
+                    "createTime" to value.createTime.toInstant().toString(),
+                    "meta" to value.meta
                 )
             }
-
             ResponseEntity.ok(mapOf("files" to response))
         } catch (e: IllegalArgumentException) {
             throw e
