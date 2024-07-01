@@ -3,8 +3,6 @@ package com.example.fileservice.service;
 import com.example.fileservice.controller.exception.NotFoundException;
 import com.example.fileservice.data.entities.Entity;
 import com.example.fileservice.data.repository.EntityRepository;
-import com.example.fileservice.library.LogItem;
-import com.example.fileservice.library.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -16,8 +14,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentCaptor.forClass;
+import static org.junit.jupiter.api.Assertions.*;;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 

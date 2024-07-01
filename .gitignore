@@ -31,8 +31,8 @@ build/
 ### VS Code ###
 .vscode/
 
-# Ignore .java files
+# Ignore .kt files
 *.kt
 
 .mvn/
-src/main/kotlin/
+/src/main/kotlin/
