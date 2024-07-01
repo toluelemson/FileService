@@ -22,10 +22,8 @@ public class FileService {
 
     @Autowired
     public FileService(EntityRepository entityRepository) {
-
         this.storageLocation = Paths.get("storage").toAbsolutePath().normalize();
         this.entityRepository = entityRepository;
-
 
         try {
             Files.createDirectories(this.storageLocation);

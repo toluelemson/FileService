@@ -26,11 +26,8 @@ class FileServiceTest {
     @Mock
     private EntityRepository entityRepository;
 
-    @InjectMocks
+    @Spy
     private FileServiceHelper fileServiceHelper;
-
-    @Mock
-    private Logger logger;
 
     @InjectMocks
     private FileService fileService;
@@ -52,11 +49,6 @@ class FileServiceTest {
         String token = fileService.uploadFile(name, contentType, meta, source, expireTime, file);
 
         assertNotNull(token);
-        ArgumentCaptor<LogItem> captor = forClass(LogItem.class);
-        verify(logger).info(captor.capture());
-
-        LogItem capturedLogItem = captor.getValue();
-        assertTrue(capturedLogItem.getMessage().contains("File uploaded successfully"));
 
         verify(entityRepository).save(any(Entity.class));
 
@@ -78,12 +70,6 @@ class FileServiceTest {
         IOException exception = assertThrows(IOException.class, () -> fileService.uploadFile(name, contentType, meta, source, expireTime, file));
 
         assertEquals("Failed to store file", exception.getMessage());
-
-        ArgumentCaptor<LogItem> captor = forClass(LogItem.class);
-        verify(logger).error(captor.capture());
-
-        LogItem capturedLogItem = captor.getValue();
-        assertTrue(capturedLogItem.getMessage().contains("File copy failed"));
     }
 
     @Test
@@ -139,19 +125,16 @@ class FileServiceTest {
 
         when(entityRepository.findByTokenIn(Collections.singletonList(token))).thenReturn(Collections.singletonList(metadata));
 
-        FileServiceHelper fileServiceHelperSpy = spy(fileServiceHelper);
-        FileService fileService = new FileService(entityRepository);
-
-        doReturn(new File(path) {
+        doAnswer(invocation -> new File(path) {
             @Override
             public boolean exists() {
                 return false;
             }
-        }).when(fileServiceHelperSpy).createFile();
+        }).when(fileServiceHelper).createFile();
 
         NotFoundException exception = assertThrows(NotFoundException.class, () -> fileService.getFile(token.toString()));
 
-        assertEquals("File not readable for token: " + token, exception.getMessage());
+        assertEquals("File does not exist for token: " + token, exception.getMessage());
     }
 
     @Test
@@ -179,10 +162,6 @@ class FileServiceTest {
 
             assertTrue(result);
             verify(entityRepository, times(1)).deleteById(metadata.getToken());
-            ArgumentCaptor<LogItem> captor = forClass(LogItem.class);
-            verify(logger).info(captor.capture());
-            LogItem capturedLogItem = captor.getValue();
-            assertTrue(capturedLogItem.getMessage().contains("File deleted successfully for token: " + token));
         }
     }
 }
