@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
 
         if (status == HttpStatus.SERVICE_UNAVAILABLE) {
             LogItem logItem = new LogItem("Critical exception occurred: " + ex.getMessage());
-            logger.error(logItem);
+            logger.crit(logItem);
         }
 
         return ResponseEntity.status(status).body(errorResponse);
