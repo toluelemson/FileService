@@ -98,6 +98,8 @@
     </dependencies>
 
     <build>
+        <finalName>ROOT</finalName>
+        <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -118,6 +120,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
     </build>
 </project>
 
