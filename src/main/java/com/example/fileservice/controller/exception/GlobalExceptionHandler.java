@@ -2,11 +2,13 @@ package com.example.fileservice.controller.exception;
 
 import com.example.fileservice.library.LogItem;
 import com.example.fileservice.library.Logger;
+import com.example.fileservice.rest.ErrorMessage;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.validation.ConstraintViolationException;
 
 import java.io.IOException;
@@ -24,56 +26,50 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ErrorMessage handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage()));
-        return ResponseEntity.badRequest().body(errors);
+        return new ErrorMessage(HttpStatus.BAD_REQUEST, errors.toString());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<Map<String, String>> handleConstraintViolationException(ConstraintViolationException ex) {
+    public ErrorMessage handleConstraintViolationException(ConstraintViolationException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getConstraintViolations().forEach(error ->
                 errors.put(error.getPropertyPath().toString(), error.getMessage()));
-        return ResponseEntity.badRequest().body(errors);
+        return new ErrorMessage(HttpStatus.BAD_REQUEST, errors.toString());
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<Map<String, String>> handleMethodNotSupportedException() {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Method not allowed");
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ErrorMessage handleMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
+        return new ErrorMessage(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage());
     }
 
-
     @ExceptionHandler(IOException.class)
-    public ResponseEntity<Map<String, String>> handleIOException(IOException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Failed to upload file: " + ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleIOException(IOException ex) {
+        return new ErrorMessage(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleResourceNotFoundException(NotFoundException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorMessage handleResourceNotFoundException(NotFoundException ex) {
+        return new ErrorMessage(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-
     @ExceptionHandler({IllegalArgumentException.class, InternalException.class})
-    public ResponseEntity<Map<String, String>> handleBadRequestExceptions(Exception ex) {
+    public ErrorMessage handleBadRequestExceptions(Exception ex) {
         HttpStatus status = ex instanceof IllegalArgumentException ? HttpStatus.BAD_REQUEST : HttpStatus.SERVICE_UNAVAILABLE;
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", ex.getMessage());
 
         if (status == HttpStatus.SERVICE_UNAVAILABLE) {
-            LogItem logItem = new LogItem("Critical exception occurred: " + ex.getMessage());
-            logger.crit(logItem);
+            logger.crit(new LogItem("Critical exception occurred: " + ex.getMessage()));
+        } else {
+            logger.crit(new LogItem("Bad request exception occurred: " + ex.getMessage()));
         }
 
-        return ResponseEntity.status(status).body(errorResponse);
+        return new ErrorMessage(status, ex.getMessage());
     }
 }
