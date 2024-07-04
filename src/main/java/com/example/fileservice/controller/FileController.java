@@ -38,7 +38,8 @@ public class FileController {
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadFile(@Valid @ModelAttribute FileUploadRequest request) {
         try {
-            Map<String, Object> metaMap = objectMapper.readValue(request.getMeta(), new TypeReference<>() {});
+            Map<String, Object> metaMap = objectMapper.readValue(request.getMeta(), new TypeReference<>() {
+            });
             String token = fileService.uploadFile(
                     request.getName(),
                     request.getContentType(),
@@ -85,6 +86,8 @@ public class FileController {
                     ));
 
             return ResponseEntity.ok(Map.of("files", response));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
         } catch (Exception e) {
             throw new InternalException("Internal server error: " + e.getMessage(), e);
         }
