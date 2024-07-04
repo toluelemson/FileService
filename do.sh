@@ -15,8 +15,9 @@ if ! command_exists docker-compose; then
 fi
 
 echo "Pulling the latest images..."
-docker pull maven:3.8.5-openjdk-17
-docker pull openjdk:17-jdk-slim
+docker pull mongo:latest
+docker pull mongo-express:latest
+
 
 echo "Building and starting the services..."
 sudo docker-compose up --build
