@@ -98,7 +98,6 @@
     </dependencies>
 
     <build>
-        <finalName>ROOT</finalName>
         <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
         <plugins>
             <plugin>
